@@ -17,11 +17,16 @@ The repository contains:
 ## 1. Clone & set-up
 
 ```bash
-cd techconnect-eai-demo
-python -m venv venv                # optional but recommended
+git clone https://github.com/mushfiqsami/EAI-ASSIGNMENT.git
+cd "%USERPROFILE%\Desktop\EAI ASSIGNMENT"
+python -m venv venv                
 # Windows
 venv\Scripts\activate
 # Linux / macOS
 # source venv/bin/activate
 
 pip install -r backend/requirements.txt
+pip install pytest requests
+python backend\app.py
+python desktop\gui.py
+
