@@ -1,141 +1,118 @@
-"""
-Tkinter desktop client for the TechConnect EAI Demo API.
-Run me with:  python desktop/gui.py   (after you start backend/app.py)
-
-Requires: requests  (already in requirements.txt)
-"""
-
 import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
-import requests, json, re
+import requests, json
 
-API = "http://localhost:5000"          # <— change only if backend port / host differ
-UUID_RE = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.I)
+API = "http://localhost:5000"
+
 
 class App(tk.Tk):
     def __init__(self):
-        super().__init__()             # fixed: one leading, two trailing underscores
+        super().__init__()
+
+       
         self.title("TechConnect EAI – Desktop Client")
-        self.geometry("520x460")
+        self.geometry("600x520")          
+        self.minsize(550, 400)            
 
+        
         nb = ttk.Notebook(self)
-        nb.pack(fill="both", expand=True, padx=6, pady=6)
+        nb.pack(fill="both", expand=True, padx=5, pady=5)
 
-        # ─────────────────── tab 1: Create Order ───────────────────
-        tab_create = ttk.Frame(nb)
-        nb.add(tab_create, text="Create Order")
+        
+        frm_new = ttk.Frame(nb)
+        nb.add(frm_new, text="Create Order")
 
-        ttk.Label(tab_create, text="Customer Name").grid(row=0, column=0, sticky="w")
-        self.ent_name = ttk.Entry(tab_create, width=40)
-        self.ent_name.grid(row=0, column=1, padx=4, pady=4)
+        ttk.Label(frm_new, text="Customer Name").grid(row=0, column=0, sticky="w")
+        self.ent_name = ttk.Entry(frm_new, width=40)
+        self.ent_name.grid(row=0, column=1, pady=4, sticky="ew")
 
-        ttk.Label(tab_create, text="Total (MYR)").grid(row=1, column=0, sticky="w")
-        self.ent_total = ttk.Entry(tab_create, width=15)
-        self.ent_total.grid(row=1, column=1, padx=4, pady=4, sticky="w")
+        ttk.Label(frm_new, text="Total (MYR)").grid(row=1, column=0, sticky="w")
+        self.ent_total = ttk.Entry(frm_new, width=20)
+        self.ent_total.grid(row=1, column=1, pady=4, sticky="w")
 
-        ttk.Button(tab_create, text="Submit", command=self.create_order)\
-           .grid(row=2, column=1, sticky="e", pady=6)
+        ttk.Button(frm_new, text="Submit", command=self.create_order)\
+           .grid(row=2, column=1, sticky="e", pady=8)
 
-        self.txt_new = scrolledtext.ScrolledText(tab_create, height=12)
-        self.txt_new.grid(row=3, column=0, columnspan=2, sticky="nsew", pady=(0,4))
-        tab_create.rowconfigure(3, weight=1)
+        self.txt_new = scrolledtext.ScrolledText(frm_new, height=12)
+        self.txt_new.grid(row=3, column=0, columnspan=2, sticky="nsew", pady=(0, 4))
 
-        # ─────────────────── tab 2: Pay / Status ───────────────────
-        tab_pay = ttk.Frame(nb)
-        nb.add(tab_pay, text="Payment / Status")
+        
+        frm_new.columnconfigure(1, weight=1)
+        frm_new.rowconfigure(3, weight=1)
 
-        ttk.Label(tab_pay, text="Order ID").grid(row=0, column=0, sticky="w")
-        self.ent_oid = ttk.Entry(tab_pay, width=45)
-        self.ent_oid.grid(row=0, column=1, padx=4, pady=4)
+     
+        frm_pay = ttk.Frame(nb)
+        nb.add(frm_pay, text="Payment / Status")
 
-        ttk.Button(tab_pay, text="Make Payment", command=self.make_payment)\
-           .grid(row=1, column=1, sticky="e", pady=6)
-        ttk.Button(tab_pay, text="Check Status", command=self.check_status)\
-           .grid(row=1, column=0, sticky="w", padx=4)
+        ttk.Label(frm_pay, text="Order ID").grid(row=0, column=0, sticky="w")
+        self.ent_oid = ttk.Entry(frm_pay, width=42)
+        self.ent_oid.grid(row=0, column=1, pady=4, sticky="ew")
 
-        self.txt_pay = scrolledtext.ScrolledText(tab_pay, height=12)
-        self.txt_pay.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(0,4))
-        tab_pay.rowconfigure(2, weight=1)
+        btn_frame = ttk.Frame(frm_pay)
+        btn_frame.grid(row=1, column=0, columnspan=2, sticky="ew")
+        ttk.Button(btn_frame, text="Make Payment", command=self.make_payment)\
+           .pack(side="right", padx=(4, 0))
+        ttk.Button(btn_frame, text="Check Status", command=self.check_status)\
+           .pack(side="right")
 
-    # ───────────────────────── helpers ────────────────────────────
-    def _show_json(self, widget: scrolledtext.ScrolledText, data: dict):
-        widget.delete("1.0", tk.END)
-        widget.insert(tk.END, json.dumps(data, indent=2))
+        self.txt_pay = scrolledtext.ScrolledText(frm_pay, height=12)
+        self.txt_pay.grid(row=2, column=0, columnspan=2, sticky="nsew", pady=(4, 0))
 
-    def _error(self, err):
-        messagebox.showerror("Error", str(err))
+        frm_pay.columnconfigure(1, weight=1)
+        frm_pay.rowconfigure(2, weight=1)
 
-    # ───────────────────── API calls ───────────────────────────────
+
     def create_order(self):
-        name  = self.ent_name.get().strip()
+        name = self.ent_name.get().strip()
         total = self.ent_total.get().strip()
-
         if not name or not total:
-            messagebox.showwarning("Missing data", "Please fill Customer Name and Total.")
+            messagebox.showwarning("Missing", "Enter name and total.")
             return
         try:
-            payload = {"customer": name,
-                       "total": float(total),
-                       "currency": "MYR"}
-        except ValueError:
-            messagebox.showwarning("Invalid total", "Total (MYR) must be a number.")
-            return
-
-        try:
-            print("[GUI] POST /api/orders", payload)
-            r = requests.post(f"{API}/api/orders", json=payload, timeout=5)
-            r.raise_for_status()
-            data = r.json()
-            self._show_json(self.txt_new, data)
-
-            # prep the Payment tab
+            payload = {"customer": name, "total": float(total), "currency": "MYR"}
+            res = requests.post(API + "/api/orders", json=payload, timeout=5)
+            res.raise_for_status()
+            data = res.json()
+            self.txt_new.delete("1.0", tk.END)
+            self.txt_new.insert(tk.END, json.dumps(data, indent=2))
+            
             self.ent_oid.delete(0, tk.END)
             self.ent_oid.insert(0, data["orderId"])
-        except Exception as e:
-            self._error(e)
-
-    def make_payment(self):
-        order_id = self.ent_oid.get().strip()
-        if not order_id:
-            messagebox.showwarning("Missing", "Enter order ID")
-            return
-        try:
-            # Fetch the order so we know the correct amount
-            ord_res = requests.get(API + f"/api/orders/{order_id}", timeout=5)
-            ord_res.raise_for_status()
-            order = ord_res.json()
-            amount = order["total"]
-
-            pay_payload = {
-                "orderId": order_id,
-                "amount": amount,
-                "method": "card"
-            }
-            print("[GUI] POST /api/payments", pay_payload)
-            pay_res = requests.post(API + "/api/payments",
-                                    json=pay_payload,
-                                    timeout=5)
-            pay_res.raise_for_status()
-
-            self.txt_pay.delete("1.0", tk.END)
-            self.txt_pay.insert(tk.END, json.dumps(pay_res.json(), indent=2))
         except Exception as err:
             messagebox.showerror("Error", str(err))
 
-
+    def make_payment(self):
+        oid = self.ent_oid.get().strip()
+        if not oid:
+            messagebox.showwarning("Missing", "Enter order ID")
+            return
+        try:
+            
+            order = requests.get(f"{API}/api/orders/{oid}", timeout=5).json()
+            pay_payload = {
+                "orderId": oid,
+                "amount": order["total"],
+                "method": "card"
+            }
+            res = requests.post(f"{API}/api/payments", json=pay_payload, timeout=5)
+            res.raise_for_status()
+            self.txt_pay.delete("1.0", tk.END)
+            self.txt_pay.insert(tk.END, json.dumps(res.json(), indent=2))
+        except Exception as err:
+            messagebox.showerror("Error", str(err))
 
     def check_status(self):
         oid = self.ent_oid.get().strip()
-        if not UUID_RE.match(oid):
-            messagebox.showwarning("Order ID", "Paste a valid orderId from the first tab.")
+        if not oid:
+            messagebox.showwarning("Missing", "Enter order ID")
             return
         try:
-            print("[GUI] GET /api/orders/" + oid)
-            r = requests.get(f"{API}/api/orders/{oid}", timeout=5)
-            r.raise_for_status()
-            self._show_json(self.txt_pay, r.json())
-        except Exception as e:
-            self._error(e)
+            res = requests.get(f"{API}/api/orders/{oid}", timeout=5)
+            res.raise_for_status()
+            self.txt_pay.delete("1.0", tk.END)
+            self.txt_pay.insert(tk.END, json.dumps(res.json(), indent=2))
+        except Exception as err:
+            messagebox.showerror("Error", str(err))
 
 
 if __name__ == "__main__":

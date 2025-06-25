@@ -1,12 +1,6 @@
-"""
-Very small in-memory DAO for demo purposes only.
-In production you would replace these with database calls.
-"""
-
 from uuid import uuid4
 from datetime import datetime, timezone
 
-# orderId ➜ record dict
 _DB: dict[str, dict] = {}
 
 
@@ -39,8 +33,7 @@ def pay_order(order_id: str, amount: float, method: str) -> dict:
     order["paidAt"] = datetime.now(timezone.utc).isoformat()
     return order
 
-# ------------------------------------------------------------------ #
-# compatibility alias for app.py
+
 def record_payment(order_id: str, amount: float, method: str) -> dict:
-    """app.py expects record_payment; re-use pay_order implementation."""
+    
     return pay_order(order_id, amount, method)

@@ -1,7 +1,3 @@
-"""
-XML validation helper using the pure-Python 'xmlschema' library.
-"""
-
 from pathlib import Path
 import xmlschema
 
@@ -16,10 +12,7 @@ def _get_schema(xsd_name: str) -> xmlschema.XMLSchema:
 
 
 def validate_xml(xml_bytes: bytes, schema_name: str):
-    """
-    Validate *xml_bytes* against *schema_name* (e.g. 'order.xsd').
-    Return an ElementTree root if valid, else raise ValueError.
-    """
+    
     schema = _get_schema(schema_name)
     try:
         root = schema.to_etree(xml_bytes)
