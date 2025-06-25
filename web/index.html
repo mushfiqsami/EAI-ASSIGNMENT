@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>TechConnect EAI Demo</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; }
+    input, button { margin: .3rem 0; }
+    textarea { width: 100%; height: 200px; }
+  </style>
+</head>
+<body>
+  <h2>Create Order</h2>
+  <label>Customer Name <input id="cust" /></label><br/>
+  <label>Total (MYR)  <input id="total" type="number" step="0.01"/></label><br/>
+  <button onclick="createOrder()">Submit</button>
+
+  <h2>Payment / Status</h2>
+  <label>Order ID&nbsp;&nbsp;&nbsp;&nbsp; <input id="oid" style="width:420px"/></label><br/>
+  <button onclick="pay()">Make Payment</button>
+  <button onclick="getStatus()">Check Status</button>
+
+  <h3>Response</h3>
+  <textarea id="out" readonly></textarea>
+
+<script>
+const API = "http://localhost:5000";
+
+function show(obj){ document.getElementById("out").value =
+                    JSON.stringify(obj,null,2); }
+
+async function createOrder(){
+  const cust  = document.getElementById("cust").value.trim();
+  const total = parseFloat(document.getElementById("total").value);
+  if(!cust||!total){ alert("Enter name & amount"); return; }
+  const r = await fetch(API+"/api/orders", {
+      method:"POST",
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({customer:cust,total:total,currency:"MYR"})
+  });
+  const data = await r.json(); show(data);
+  document.getElementById("oid").value = data.orderId;
+}
+
+async function pay(){
+  const oid=document.getElementById("oid").value.trim();
+  if(!oid){ alert("Order ID?"); return; }
+  const r=await fetch(API+"/api/payments",{
+      method:"POST",
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({orderId:oid,amount:99.99,method:"card"})
+  });
+  show(await r.json());
+}
+
+async function getStatus(){
+  const oid=document.getElementById("oid").value.trim();
+  if(!oid){ alert("Order ID?"); return; }
+  const r=await fetch(API+"/api/orders/"+oid);
+  show(await r.json());
+}
+</script>
+</body>
+</html>

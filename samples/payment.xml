@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<payment>
+  <orderId>David</orderId>
+  <amount>199.99</amount>
+  <method>card</method>
+</payment>
